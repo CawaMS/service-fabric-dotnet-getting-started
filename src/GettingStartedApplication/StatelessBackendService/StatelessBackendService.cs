@@ -11,9 +11,14 @@ namespace StatelessBackendService
     using System.Threading;
     using System.Threading.Tasks;
     using global::StatelessBackendService.Interfaces;
+    using Microsoft.ApplicationInsights;
+    using Microsoft.ApplicationInsights.DataContracts;
+    using Microsoft.ApplicationInsights.Extensibility;
+    using Microsoft.ApplicationInsights.ServiceFabric;
     using Microsoft.ServiceFabric.Services.Communication.Runtime;
     using Microsoft.ServiceFabric.Services.Remoting.Runtime;
     using Microsoft.ServiceFabric.Services.Runtime;
+    using Microsoft.Diagnostics.Activities;
 
     /// <summary>
     /// An instance of this class is created for each service instance by the Service Fabric runtime.
@@ -21,15 +26,32 @@ namespace StatelessBackendService
     internal sealed class StatelessBackendService : StatelessService, IStatelessBackendService
     {
         private long iterations = 0;
-
+        private TelemetryClient telemetryClient;
         public StatelessBackendService(StatelessServiceContext context)
             : base(context)
         {
+            var telemetryConfig = TelemetryConfiguration.Active;
+            FabricTelemetryInitializerExtension.SetServiceCallContext(context);
+            telemetryConfig.InstrumentationKey = System.Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
+            this.telemetryClient = new TelemetryClient(telemetryConfig);
+
         }
 
-        public Task<long> GetCountAsync()
+        public Task<long> GetCountAsync(string requestId, IEnumerable<KeyValuePair<string, string>> correlationContext)
         {
-            return Task.FromResult(this.iterations);
+            //RequestTelemetry rt = SetUpRequestActivity(requestId, requestName, correlationContext, activityName);
+
+            //return Task.FromResult(this.iterations);
+
+            return Activities.HandleServiceRemotingRequestAsync<long>(async () => {
+                ServiceEventSource.Current.ServiceMessage(this.Context, "In the backend service, getting the count!");
+                long result = await Task.FromResult(this.iterations);
+                if (result % 5 == 0)
+                {
+                    throw new InvalidOperationException("Not happy with this number!");
+                }
+                return result;
+            }, requestId: requestId, requestName: "fabric:/GettingStartedApplication/StatelessBackendService/GetCountAsync", correlationContext: correlationContext);
         }
 
         /// <summary>

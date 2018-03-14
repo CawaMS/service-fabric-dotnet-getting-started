@@ -21,6 +21,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StatelessBackendService.Int
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StatefulBackendService", "StatefulBackendService\StatefulBackendService.csproj", "{8CD4EAA3-0100-4504-91C4-2EC486BCF953}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ActivitySupport", "ActivitySupport", "{716ECE49-7048-4BFB-B7E7-53413D370C46}"
+	ProjectSection(SolutionItems) = preProject
+		ActivitySupport\Activities.cs = ActivitySupport\Activities.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -60,5 +65,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D92401BF-4103-41C4-A5EF-5875901D03BC}
 	EndGlobalSection
 EndGlobal

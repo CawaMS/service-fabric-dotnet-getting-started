@@ -6,9 +6,12 @@
 namespace WebService
 {
     using System.Collections.Generic;
+    using System.Diagnostics.Tracing;
     using System.Fabric;
     using System.IO;
     using System.Net.Http;
+    using Microsoft.ApplicationInsights.EventSourceListener;
+    using Microsoft.ApplicationInsights.Extensibility;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
@@ -43,9 +46,11 @@ namespace WebService
                                 ServiceEventSource.Current.ServiceMessage(serviceContext, $"Starting WebListener on {url}");
 
                                 return new WebHostBuilder()
-                                    .UseWebListener()
+                                    //.UseWebListener()
+                                    .UseKestrel()
                                     .ConfigureServices(
                                         services => services
+                                        .AddSingleton<ITelemetryModule>((serviceProvider) => CreateEventSourceTelemetryModule()) // SF uses event source, that's why this line is needed. ASP.NET core doesn't need this
                                             .AddSingleton<ConfigSettings>(new ConfigSettings(serviceContext))
                                             .AddSingleton<HttpClient>(new HttpClient())
                                             .AddSingleton<FabricClient>(new FabricClient())
@@ -54,9 +59,18 @@ namespace WebService
                                     .UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.None)
                                     .UseStartup<Startup>()
                                     .UseUrls(url)
+                                    .UseApplicationInsights()
                                     .Build();
                             }))
             };
+        }
+
+        private EventSourceTelemetryModule CreateEventSourceTelemetryModule()
+        {
+            var module = new EventSourceTelemetryModule();
+            module.Sources.Add(new EventSourceListeningRequest() { Name = "Microsoft-ServiceFabric-Services", Level = EventLevel.Verbose });
+            module.Sources.Add(new EventSourceListeningRequest() { Name = "MyCompany-GettingStartedApplication-WebService", Level = EventLevel.Verbose });
+            return module;
         }
     }
 }
