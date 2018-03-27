@@ -26,14 +26,12 @@
   </ServiceManifestImport>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="StatefulBackendServicePkg" ServiceManifestVersion="1.0.0" />
-    <ConfigOverrides />
     <EnvironmentOverrides CodePackageRef="Code">
       <EnvironmentVariable Name="ApplicationInsights:InstrumentationKey" Value="[APPINSIGHTS_INSTRUMENTATIONKEY]" />
     </EnvironmentOverrides>
   </ServiceManifestImport>
   <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="StatelessBackendServicePkg" ServiceManifestVersion="1.0.0" />
-    <ConfigOverrides />
     <EnvironmentOverrides CodePackageRef="Code">
       <EnvironmentVariable Name="APPINSIGHTS_INSTRUMENTATIONKEY" Value="[APPINSIGHTS_INSTRUMENTATIONKEY]" />
     </EnvironmentOverrides>

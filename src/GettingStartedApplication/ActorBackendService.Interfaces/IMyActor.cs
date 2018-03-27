@@ -3,6 +3,10 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+using Microsoft.ServiceFabric.Services.Remoting;
+using Microsoft.ServiceFabric.Services.Remoting.FabricTransport;
+
+[assembly: FabricTransportServiceRemotingProvider(RemotingListener = RemotingListener.V2Listener, RemotingClient = RemotingClient.V2Client)]
 namespace ActorBackendService.Interfaces
 {
     using System.Threading;
@@ -19,8 +23,7 @@ namespace ActorBackendService.Interfaces
         /// <summary>
         /// TODO: Replace with your own actor method.
         /// </summary>
-        /// <param name="count"></param>
         /// <returns></returns>
-        Task StartProcessingAsync(string requestId, IEnumerable<KeyValuePair<string, string>> correlationContextHeader, CancellationToken cancellationToken);
+        Task StartProcessingAsync(CancellationToken cancellationToken);
     }
 }

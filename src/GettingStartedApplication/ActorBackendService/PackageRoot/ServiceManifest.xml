@@ -29,8 +29,9 @@
   <ConfigPackage Name="Config" Version="1.0.0" />
   <Resources>
     <Endpoints>
-      <Endpoint Name="MyActorServiceEndpoint" />
+      <Endpoint Name="MyActorServiceEndpointV2" />
       <Endpoint Name="MyActorServiceReplicatorEndpoint" />
+      <Endpoint Name="MyActorServiceEndpoint" />
     </Endpoints>
   </Resources>
   <!-- The content will be generated during build -->

@@ -11,14 +11,12 @@ namespace StatelessBackendService
     using System.Threading;
     using System.Threading.Tasks;
     using global::StatelessBackendService.Interfaces;
-    using Microsoft.ApplicationInsights;
-    using Microsoft.ApplicationInsights.DataContracts;
-    using Microsoft.ApplicationInsights.Extensibility;
-    using Microsoft.ApplicationInsights.ServiceFabric;
     using Microsoft.ServiceFabric.Services.Communication.Runtime;
     using Microsoft.ServiceFabric.Services.Remoting.Runtime;
     using Microsoft.ServiceFabric.Services.Runtime;
-    using Microsoft.Diagnostics.Activities;
+    using Microsoft.ApplicationInsights.Extensibility;
+    using Microsoft.ApplicationInsights;
+    using Microsoft.ApplicationInsights.ServiceFabric;
 
     /// <summary>
     /// An instance of this class is created for each service instance by the Service Fabric runtime.
@@ -27,6 +25,7 @@ namespace StatelessBackendService
     {
         private long iterations = 0;
         private TelemetryClient telemetryClient;
+
         public StatelessBackendService(StatelessServiceContext context)
             : base(context)
         {
@@ -34,24 +33,17 @@ namespace StatelessBackendService
             FabricTelemetryInitializerExtension.SetServiceCallContext(context);
             telemetryConfig.InstrumentationKey = System.Environment.GetEnvironmentVariable("APPINSIGHTS_INSTRUMENTATIONKEY");
             this.telemetryClient = new TelemetryClient(telemetryConfig);
-
         }
 
-        public Task<long> GetCountAsync(string requestId, IEnumerable<KeyValuePair<string, string>> correlationContext)
+        public async Task<long> GetCountAsync()
         {
-            //RequestTelemetry rt = SetUpRequestActivity(requestId, requestName, correlationContext, activityName);
-
-            //return Task.FromResult(this.iterations);
-
-            return Activities.HandleServiceRemotingRequestAsync<long>(async () => {
-                ServiceEventSource.Current.ServiceMessage(this.Context, "In the backend service, getting the count!");
-                long result = await Task.FromResult(this.iterations);
-                if (result % 5 == 0)
-                {
-                    throw new InvalidOperationException("Not happy with this number!");
-                }
-                return result;
-            }, requestId: requestId, requestName: "fabric:/GettingStartedApplication/StatelessBackendService/GetCountAsync", correlationContext: correlationContext);
+            ServiceEventSource.Current.ServiceMessage(this.Context, "In the backend service, getting the count!");
+            long result = await Task.FromResult(this.iterations);
+            if (result % 5 == 0)
+            {
+                throw new InvalidOperationException("Not happy with this number!");
+            }
+            return result;
         }
 
         /// <summary>
@@ -60,10 +52,7 @@ namespace StatelessBackendService
         /// <returns>A collection of listeners.</returns>
         protected override IEnumerable<ServiceInstanceListener> CreateServiceInstanceListeners()
         {
-            return new ServiceInstanceListener[1]
-            {
-                new ServiceInstanceListener(this.CreateServiceRemotingListener)
-            };
+            return this.CreateServiceRemotingInstanceListeners();
         }
 
         /// <summary>
@@ -81,7 +70,11 @@ namespace StatelessBackendService
 
                 ++this.iterations;
 
-                ServiceEventSource.Current.ServiceMessage(this.Context, "Working-{0}", this.iterations);
+                if (this.iterations % 50 == 1)
+                {
+                    // Raise "working" event only once in every 50 iterations
+                    ServiceEventSource.Current.ServiceMessage(this.Context, "Working-{0}", this.iterations);
+                }
 
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }

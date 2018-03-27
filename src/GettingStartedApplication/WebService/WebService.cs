@@ -10,6 +10,7 @@ namespace WebService
     using System.Fabric;
     using System.IO;
     using System.Net.Http;
+    using Microsoft.ApplicationInsights.ServiceFabric;
     using Microsoft.ApplicationInsights.EventSourceListener;
     using Microsoft.ApplicationInsights.Extensibility;
     using Microsoft.AspNetCore.Hosting;
@@ -17,6 +18,7 @@ namespace WebService
     using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
     using Microsoft.ServiceFabric.Services.Communication.Runtime;
     using Microsoft.ServiceFabric.Services.Runtime;
+    using Microsoft.ApplicationInsights.ServiceFabric.Module;
 
     /// <summary>
     /// The FabricRuntime creates an instance of this class for each service type instance. 
@@ -46,20 +48,22 @@ namespace WebService
                                 ServiceEventSource.Current.ServiceMessage(serviceContext, $"Starting WebListener on {url}");
 
                                 return new WebHostBuilder()
-                                    //.UseWebListener()
                                     .UseKestrel()
                                     .ConfigureServices(
                                         services => services
-                                        .AddSingleton<ITelemetryModule>((serviceProvider) => CreateEventSourceTelemetryModule()) // SF uses event source, that's why this line is needed. ASP.NET core doesn't need this
                                             .AddSingleton<ConfigSettings>(new ConfigSettings(serviceContext))
                                             .AddSingleton<HttpClient>(new HttpClient())
                                             .AddSingleton<FabricClient>(new FabricClient())
-                                            .AddSingleton<StatelessServiceContext>(serviceContext))
+                                            .AddSingleton<StatelessServiceContext>(serviceContext)
+                                            .AddSingleton<ITelemetryInitializer>((serviceProvider) => FabricTelemetryInitializerExtension.CreateFabricTelemetryInitializer(serviceContext))
+                                            .AddSingleton<ITelemetryModule>((serviceProvider) => CreateEventSourceTelemetryModule())
+                                            .AddSingleton<ITelemetryModule>(new ServiceRemotingDependencyTrackingTelemetryModule())
+                                            .AddSingleton<ITelemetryModule>(new ServiceRemotingRequestTrackingTelemetryModule()))
                                     .UseContentRoot(Directory.GetCurrentDirectory())
                                     .UseServiceFabricIntegration(listener, ServiceFabricIntegrationOptions.None)
                                     .UseStartup<Startup>()
-                                    .UseUrls(url)
                                     .UseApplicationInsights()
+                                    .UseUrls(url)
                                     .Build();
                             }))
             };

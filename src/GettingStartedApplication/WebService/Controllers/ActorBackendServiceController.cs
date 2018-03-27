@@ -18,11 +18,6 @@ namespace WebService.Controllers
     using System.Linq;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Diagnostics;
-    using System.Collections.Generic;
-    using Microsoft.ApplicationInsights.DataContracts;
-    using Microsoft.ApplicationInsights;
-    using Microsoft.ApplicationInsights.Extensibility;
 
     [Route("api/[controller]")]
     public class ActorBackendServiceController : Controller
@@ -72,60 +67,14 @@ namespace WebService.Controllers
         [HttpPost]
         public async Task<IActionResult> PostAsync()
         {
-
             string serviceUri = this.serviceContext.CodePackageActivationContext.ApplicationName + "/" + this.configSettings.ActorBackendServiceName;
 
             IMyActor proxy = ActorProxy.Create<IMyActor>(ActorId.CreateRandom(), new Uri(serviceUri));
 
-            // Create and start a new activity representing the beginning of this outgoing request
-            Activity activity = new Activity("HttpOut");
-            activity.Start();
-
-            DateTimeOffset startTime = DateTimeOffset.UtcNow;
-
-            // Extract the request id and correlation context headers so they can be passed to the callee, which
-            // will create the correlation
-            Activity currentActivity = Activity.Current;
-
-            string requestId = currentActivity.Id;
-            Dictionary<string, string> correlationContextHeader = new Dictionary<string, string>();
-            foreach (var pair in currentActivity.Baggage)
-            {
-                correlationContextHeader.Add(pair.Key, pair.Value);
-            }
-
-            try
-            {
-                await proxy.StartProcessingAsync(requestId, correlationContextHeader, CancellationToken.None);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            finally
-            {
-                //always stop activity if it was started
-                if (activity != null)
-                {
-                    activity.Stop();
-                }
-                DateTimeOffset endTime = DateTimeOffset.UtcNow;
-                DependencyTelemetry telemetry = new DependencyTelemetry(
-                    "HTTP", // dependencyTypeName
-                    serviceUri, // target
-                    "POST " + serviceUri, // dependencyName
-                    serviceUri, // data
-                    startTime, // startTime
-                    endTime - startTime, // duration
-                    "OK", // resultCode
-                    true); // success
-                telemetry.Id = activity.Id;
-                TelemetryClient client = new TelemetryClient(TelemetryConfiguration.Active);
-                client.TrackDependency(telemetry);
-            }
+            await proxy.StartProcessingAsync(CancellationToken.None);
 
             return this.Json(true);
-
+          
         }
     }
 }

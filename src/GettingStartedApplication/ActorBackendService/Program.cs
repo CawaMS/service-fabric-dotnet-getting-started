@@ -3,11 +3,18 @@
 //  Licensed under the MIT License (MIT). See License.txt in the repo root for license information.
 // ------------------------------------------------------------
 
+// For using Service remoting V2
+using Microsoft.ServiceFabric.Services.Remoting;
+using Microsoft.ServiceFabric.Services.Remoting.FabricTransport;
+
+
 namespace ActorBackendService
 {
     using System;
     using System.Threading;
     using Microsoft.ServiceFabric.Actors.Runtime;
+    using Microsoft.ApplicationInsights.Extensibility;
+    using Microsoft.ApplicationInsights.ServiceFabric;
 
     internal static class Program
     {
@@ -24,7 +31,13 @@ namespace ActorBackendService
                 // For more information, see https://aka.ms/servicefabricactorsplatform
 
                 ActorRuntime.RegisterActorAsync<MyActor>(
-                    (context, actorType) => new ActorService(context, actorType)).GetAwaiter().GetResult();
+                    (context, actorType) =>
+                    {
+                        var telemetryConfig = TelemetryConfiguration.Active;
+
+                        
+                        return new MyActorService(context, actorType);
+                    }).GetAwaiter().GetResult();
 
                 Thread.Sleep(Timeout.Infinite);
             }
