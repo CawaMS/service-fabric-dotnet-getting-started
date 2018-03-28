@@ -206,7 +206,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <SubType>Designer</SubType>
     </Content>
-    <None Include="PackageRoot\ServiceManifest.xml" />
+    <None Include="PackageRoot\ServiceManifest.xml">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="PackageRoot\Config\Settings.xml" />
     <None Include="App.config">
       <SubType>Designer</SubType>
